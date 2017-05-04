@@ -14,12 +14,13 @@ namespace AkkaRaft.Shared.Nodes
             Leader=2
         }
 
-        public Roles Role { get; private set; }
         public static int Term { get; private set; }
+        public static int ClusterUid { get; private set; }
+        public static int CurrentLeaderId { get; private set; }
+        public Roles Role { get; private set; }
         private int _votedForTerm;
         private int _majority;
         private int _votes;
-        public static int ClusterUid { get; private set; }
         public Node(int clusterUniqueId)
         {
             ClusterUid = clusterUniqueId;
@@ -56,6 +57,7 @@ namespace AkkaRaft.Shared.Nodes
                 {
                     Log.Information("{0}", "Elected!");
                     Role = Roles.Leader;
+                    CurrentLeaderId = ClusterUid;
                     ActionBroker.StopWaitForVote();
                     ActionBroker.StartHeartbeat();
                 }
@@ -82,8 +84,8 @@ namespace AkkaRaft.Shared.Nodes
                         Log.Information("{0}", $"Updating from term {Term} to {hb.Term}");
                         Term = hb.Term;
                     }
-
                 }
+                CurrentLeaderId = hb.SenderId;
             };
 
             NodeEvents.OnJoinedCluster = () => {

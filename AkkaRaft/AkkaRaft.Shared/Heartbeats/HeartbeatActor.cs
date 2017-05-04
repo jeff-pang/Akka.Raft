@@ -36,7 +36,7 @@ namespace AkkaRaft.Shared.Heartbeats
             Receive<SendHeartbeat>(send =>
             {
                 Console.Write(">");
-                mediator.Tell(new Publish("heartbeat", new Heartbeat(Node.Term)));
+                mediator.Tell(new Publish("heartbeat", new Heartbeat(Node.Term, Node.ClusterUid)));
             });
 
             Receive<HeartbeatResponse>(hbr =>
