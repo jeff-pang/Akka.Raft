@@ -3,6 +3,7 @@ using Akka.Cluster;
 using Akka.Cluster.Tools.PublishSubscribe;
 using AkkaRaft.Shared.Candidates;
 using AkkaRaft.Shared.Nodes;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,12 +14,13 @@ namespace AkkaRaft.Shared.Followers
     {
         public FollowerActor()
         {
+
             Receive<VoteRequest>(vr =>
             {
                 bool vote = NodeEvents.OnVoteRequest?.Invoke(vr) ?? false;
                 if (vote)
                 {
-                    Sender.Tell(new Vote(vr.Term));
+                    Sender.Tell(new Vote(vr.Term,Node.ClusterUid));
                 }
             });
         }

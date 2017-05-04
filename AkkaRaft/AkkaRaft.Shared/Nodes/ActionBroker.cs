@@ -64,6 +64,16 @@ namespace AkkaRaft.Shared.Nodes
             _candidate?.Tell(new AskForVote(term));
         }
 
+        public static void StartWaitForVote()
+        {
+            _candidate?.Tell(new StartWaitForVote(true));
+        }
+
+        public static void StopWaitForVote()
+        {
+            _candidate?.Tell(new StartWaitForVote(false));
+        }
+
         public static void Stop(TimeSpan timeout)
         {
             _electionCycle?.GracefulStop(timeout);

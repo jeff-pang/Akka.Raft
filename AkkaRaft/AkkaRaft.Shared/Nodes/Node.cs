@@ -15,27 +15,30 @@ namespace AkkaRaft.Shared.Nodes
         }
 
         public Roles Role { get; private set; }
-
-        private int _term;
+        public static int Term { get; private set; }
         private int _votedForTerm;
         private int _majority;
         private int _votes;
-        private int _uid;
+        public static int ClusterUid { get; private set; }
         public Node(int clusterUniqueId)
         {
-            _uid = clusterUniqueId;
+            ClusterUid = clusterUniqueId;
+
+            Log.Information("{0}", $"My Uid is {ClusterUid}");
+
             NodeEvents.OnElectionTimeout = () => {
                 //step up as candidate
                 //ask for vote
                 if (Role == Roles.Follower)
                 {
                     Role = Roles.Candidate;
-                    _term++;
+                    Term++;
                     _votes = 0;
 
-                    Log.Information("{0}", $"Starting election for term {_term}");
+                    Log.Information("{0}", $"Starting election for term {Term}");
                     ActionBroker.StopElectionTimer();
-                    ActionBroker.AskForVote(_term);
+                    ActionBroker.AskForVote(Term);
+                    ActionBroker.StartWaitForVote();
                 }
             };
 
@@ -43,22 +46,44 @@ namespace AkkaRaft.Shared.Nodes
             {
                 //if got more than majority vote, then becomes leader           
                 //start sending heartbeat
-                if (term == _term)
+                if (term == Term)
                 {
                     _votes++;
                 }
 
-                Log.Information("{0}", $"Got {_votes}/{_majority} votes for term {term}");
+                Log.Information("{0}", $"Got {_votes}/{_majority} votes for term {term} from {uid}");
                 if (_votes >= _majority)
                 {
+                    Log.Information("{0}", "Elected!");
                     Role = Roles.Leader;
+                    ActionBroker.StopWaitForVote();
                     ActionBroker.StartHeartbeat();
                 }
             };
+
             NodeEvents.OnHeartbeat = hb => {
                 //resets election time
                 //otherwise becomes candidate and send request for votes         
                 ActionBroker.ResetElectionTimer();
+
+                //if heartbeat has term equal or bigger than self, then step down
+                if (hb.Term >= Term)
+                {
+                    if (Role != Roles.Follower)
+                    {
+                        Log.Information("{0}", "Stepping down");
+                        Role = Roles.Follower;
+                        ActionBroker.StopHeartbeat();
+                        ActionBroker.StartElectionTimer();
+                    }
+
+                    if (hb.Term != Term)
+                    {
+                        Log.Information("{0}", $"Updating from term {Term} to {hb.Term}");
+                        Term = hb.Term;
+                    }
+
+                }
             };
 
             NodeEvents.OnJoinedCluster = () => {
@@ -71,22 +96,35 @@ namespace AkkaRaft.Shared.Nodes
 
             NodeEvents.OnVoteRequest = vr =>
             {
-                //if not voted this term and is not a candidate or leader, then vote for the candidate
-                if (_votedForTerm < vr.Term)
+                //if not voted this term and is not a leader, then vote for the candidate
+                if (_votedForTerm < vr.Term && Role != Roles.Leader)
                 {
-                    if (vr.SenderId != _uid)
+                    if (vr.SenderId != ClusterUid)
                     {
-                        _votedForTerm = vr.Term;
-                        Log.Information("{0}", $"Voting for term {vr.Term}");
+                        Log.Information("{0}", $"Vote request from candidate {vr.SenderId} for term {vr.Term}");
                     }
                     else
                     {
-                        Log.Information("{0}", $"Voting for self in term {vr.Term}");
+                        Log.Information("{0}", $"Vote request from self in term {vr.Term}");
                     }
+
+                    _votedForTerm = vr.Term;
+
                     return true;
                 }
                 else
+                {
+                    Log.Information("{0}", $"Not voting. {vr.SenderId} asking for term {vr.Term}, last voted for {_votedForTerm} and role is {Role.ToString()}");
                     return false;
+                }
+            };
+
+            NodeEvents.OnWaitForVoteTimeout = () =>
+            {
+                //restart election time                
+                Role = Roles.Follower;
+                ActionBroker.ResetElectionTimer();
+                ActionBroker.StartElectionTimer();                
             };
 
             NodeEvents.OnMemberChanged = count => {

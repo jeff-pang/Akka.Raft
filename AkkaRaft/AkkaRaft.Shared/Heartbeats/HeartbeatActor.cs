@@ -16,7 +16,7 @@ namespace AkkaRaft.Shared.Heartbeats
         private ICancelable _heartbeatTask;
         private int _membersCount;
         private bool _heartbeatStarted=false;
-        public int Term { get; set; }
+
         protected Cluster cluster = Cluster.Get(Context.System);
         
         public HeartbeatActor()
@@ -36,7 +36,7 @@ namespace AkkaRaft.Shared.Heartbeats
             Receive<SendHeartbeat>(send =>
             {
                 Console.Write(">");
-                mediator.Tell(new Publish("heartbeat", new Heartbeat(Term)));
+                mediator.Tell(new Publish("heartbeat", new Heartbeat(Node.Term)));
             });
 
             Receive<HeartbeatResponse>(hbr =>

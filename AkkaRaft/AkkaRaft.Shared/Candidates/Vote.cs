@@ -7,9 +7,11 @@ namespace AkkaRaft.Shared.Candidates
     public class Vote
     {
         public int Term { get; private set; }
-        public Vote(int term)
+        public int SenderId { get; private set; }
+        public Vote(int term,int clusterUniqueId)
         {
             Term = term;
+            SenderId = clusterUniqueId;
         }
     }
 }
