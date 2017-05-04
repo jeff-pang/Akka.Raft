@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "lighthouse": {
+      "commandName": "Project",
+      "commandLineArgs": "localhost 1111"
+    }
+  }
+}
