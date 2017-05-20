@@ -11,11 +11,15 @@ using AkkaRaft.Shared;
 using System.Reflection;
 using AkkaRaft.Shared.Heartbeats;
 using AkkaRaft.Shared.Nodes;
+using System.Runtime.InteropServices;
 
 namespace AkkaRaft
 {
     class Program
     {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetConsoleCtrlHandler(Action callback, bool add);
+
         static void Main(string[] args)
         {
             var assm = Assembly.GetEntryAssembly();
@@ -35,7 +39,7 @@ namespace AkkaRaft
 
             using (var system = ActorSystem.Create("raftsystem", config))
             {
-                var builder = new NodeBuilder();
+                var builder = new NodeFactory();
                 var node=builder.MakeNode(system);
                 Log.Information("Program started. 'exit' to shutdown");
 
@@ -45,9 +49,9 @@ namespace AkkaRaft
                 {
                     input=Console.ReadLine();
                 } while (input?.ToLower() != "exit");
-
+                SetConsoleCtrlHandler(node.OnKill,true);
                 node.Stop(TimeSpan.FromSeconds(20));
             }
-        }
+        }        
     }
 }

@@ -12,6 +12,8 @@ namespace AkkaRaft.Shared.Heartbeats
 {
     public class HeartbeatActor:ReceiveActor
     {
+        private const int HEARTBEAT_INTERVAL_MS = 1000;
+
         private bool _joinedCluster;
         private ICancelable _heartbeatTask;
         private int _membersCount;
@@ -28,22 +30,27 @@ namespace AkkaRaft.Shared.Heartbeats
                 if (Sender != Self)
                 {
                     Console.Write(".");
-                    NodeEvents.OnHeartbeat?.Invoke(hb);
-                    Sender.Tell(new HeartbeatResponse { Id = hb.Id });
+                    NodeEvents.OnHeartbeat?.Invoke(Sender.Path.ToString(),hb);
                 }
+            });
+
+            Receive<SendHeartbeatResponse>(s =>
+            {
+                var sender = Context.ActorSelection(s.SenderPath);
+                sender.Tell(new HeartbeatResponse(s.HeartbeatId, s.Term, s.LogIndex));
             });
 
             Receive<SendHeartbeat>(send =>
             {
                 Console.Write(">");
-                mediator.Tell(new Publish("heartbeat", new Heartbeat(Node.Term, Node.ClusterUid)));
+                mediator.Tell(new Publish("heartbeat", new Heartbeat(Node.Term,Node.LogIndex, Node.ClusterUid)));
             });
 
             Receive<HeartbeatResponse>(hbr =>
             {
                 if (Sender != Self)
                 {
-                    NodeEvents.OnHeartbeatResponse?.Invoke();
+                    NodeEvents.OnHeartbeatResponse?.Invoke(hbr);
                 }
             });
 
@@ -82,7 +89,7 @@ namespace AkkaRaft.Shared.Heartbeats
                         _heartbeatStarted = true;
                         Log.Information("{0}", "Heartbeat Start");
                         _heartbeatTask = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimeSpan.FromMilliseconds(20),
-                        TimeSpan.FromMilliseconds(20), Context.Self, new SendHeartbeat(), ActorRefs.NoSender);
+                        TimeSpan.FromMilliseconds(HEARTBEAT_INTERVAL_MS), Context.Self, new SendHeartbeat(), ActorRefs.NoSender);
                     }
                 }
                 else

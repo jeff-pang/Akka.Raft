@@ -2,6 +2,7 @@
 using AkkaRaft.Shared.Candidates;
 using AkkaRaft.Shared.Elections;
 using AkkaRaft.Shared.Heartbeats;
+using AkkaRaft.Shared.Web;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +15,14 @@ namespace AkkaRaft.Shared.Nodes
         static IActorRef _electionCycle;
         static IActorRef _candidate;
         static IActorRef _follower;
+        static IActorRef _leader;
+        static IActorRef _statusBroadcast;
+
+        public static void SetStatusBroadcast(IActorRef statusBroadcast)
+        {
+            _statusBroadcast = statusBroadcast;
+        }
+
         public static void SetHeartbeat(IActorRef heartbeat)
         {
             _heartbeat = heartbeat;
@@ -27,6 +36,11 @@ namespace AkkaRaft.Shared.Nodes
         public static void SetCandidate(IActorRef candidate)
         {
             _candidate = candidate;
+        }
+
+        public static void SetLeader(IActorRef leader)
+        {
+            _leader = leader;
         }
 
         public static void SetFollower(IActorRef follower)
@@ -73,9 +87,18 @@ namespace AkkaRaft.Shared.Nodes
         {
             _candidate?.Tell(new StartWaitForVote(false));
         }
+        public static void SendTerminateSignal()
+        {
+            _statusBroadcast.Tell(new SendTerminate());
+        }
+        public static void SendHeartbeatResponse(double heartbeatId, int senderId, string senderPath, int term, int logIndex)
+        {
+            _heartbeat.Tell(new SendHeartbeatResponse(heartbeatId, senderId, senderPath, term, logIndex));
+        }
 
         public static void Stop(TimeSpan timeout)
         {
+            SendTerminateSignal();
             _electionCycle?.GracefulStop(timeout);
             _electionCycle = null;
             _heartbeat?.GracefulStop(timeout);

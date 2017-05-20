@@ -9,11 +9,12 @@ namespace AkkaRaft.Shared.Nodes
     public class NodeEvents
     {
         public static Action OnElectionTimeout { get; set; }
+        public static Action<int> OnElectionDurationChanged { get; set; }
+        public static Action<int> OnElectionElapsed { get; set; }
         public static Action OnWaitForVoteTimeout { get; set; }
-        
-        public static Action<Heartbeat> OnHeartbeat { get; set; }
+        public static Action<string,Heartbeat> OnHeartbeat { get; set; }
         public static Action OnJoinedCluster { get; set; }
-        public static Action OnHeartbeatResponse { get; set; }
+        public static Action<HeartbeatResponse> OnHeartbeatResponse { get; set; }
         public static Action<int> OnMemberChanged { get; set; }
         public static Action<int,int> OnGotVote { get; set; }
         public static Func<VoteRequest,bool> OnVoteRequest { get; set; }

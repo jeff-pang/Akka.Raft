@@ -1,0 +1,53 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">        
+    <link rel="stylesheet" href="../Content/css/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="../Content/js/radialIndicator.js"></script>
+    <script src="../Content/js/main.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script type="text/html" id="item_tmpl">
+        <div class="col-sm-2 col-md-2" id="tmpl">
+            <div class="circleContainer col-sm-1 col-md-1">
+                <div class="circle" id="circle">
+                    <div class="message"><span class="label label-default">Leader</span></div>
+                </div>
+            </div>
+            <div class="col-sm-1 col-md-1">
+                <table class="table table-condensed">
+                    <tr><td>Nil</td></tr>
+                    <tr><td>Nil</td></tr>
+                    <tr><td>Nil</td></tr>
+                    <tr><td>Nil</td></tr>
+                </table>
+            </div>
+            <div>
+                <p><span class="label label-primary vote"><span>Vote:</span><span class="voteValue">0 / 0</span></span></p>
+                <p><a href="#" class="btn btn-warning" role="button">Kill Instance</a></p>
+            </div>
+        </div>
+    </script>
+    <script type="text/html" id="loading_tmpl">
+        <div class="col-sm-3 col-md-3 loadingcontainer">
+            <div class="loading"></div>
+        </div>
+    </script>
+</head>
+<body>
+    <p>
+        <div class="row">
+            <div class="col-sm-offset-5 col-md-2 col-sm-2">
+                <button type="button" class="btn btn-success btn-md btn-block" id="btnStartNew">Start New Instance</button>
+            </div>
+        </div>
+    </p>
+    <div class="row">
+        <div class="col-sm-12 col-md-12" id="nodesArea">            
+        </div>
+    </div>
+</body>
+</html>

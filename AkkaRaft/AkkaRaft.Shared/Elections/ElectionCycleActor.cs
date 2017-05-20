@@ -11,19 +11,32 @@ namespace AkkaRaft.Shared.Elections
     public class ElectionCycleActor:ReceiveActor
     {
         class TimeElapse { }
+
+        private const int TIME_STEP_MS =50;
+        private const int MIN_DURATION_MS = 5000;
+        private const int MAX_DURATION_MS = 10000;
+        private const int MS_PER_SEC = 1000;
+
         private ICancelable _timerTask;
-        private int _electionTimeout = 10000;
+        private int _electionDuration = MAX_DURATION_MS;
         private int _timeElapsed = 0;
         private bool _isStarted = false;
+
+        public int ElectionDuration { get => _electionDuration; set => _electionDuration = value; }
+
         public ElectionCycleActor()
         {
             randomiseTimeout();
-            Log.Information("{0}", $"Timeout is {_electionTimeout}");
+            Log.Information("{0}", $"Duration is {(float)_electionDuration/ MS_PER_SEC}");
 
             Receive<TimeElapse>(t => {
-                _timeElapsed += 100;
-                Console.Write($"({_timeElapsed/100})");
-                if(_timeElapsed >= _electionTimeout)
+
+                _timeElapsed += TIME_STEP_MS;
+
+                NodeEvents.OnElectionElapsed?.Invoke(_timeElapsed);
+
+                Console.Write($"({(float)_timeElapsed/ MS_PER_SEC})");
+                if(_timeElapsed >= _electionDuration)
                 {
                     randomiseTimeout();
                     NodeEvents.OnElectionTimeout?.Invoke();
@@ -40,8 +53,8 @@ namespace AkkaRaft.Shared.Elections
                     if (!_isStarted)
                     {
                         _isStarted = true;
-                        _timerTask = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimeSpan.FromMilliseconds(10),
-                        TimeSpan.FromMilliseconds(100), Context.Self, new TimeElapse(), ActorRefs.NoSender);                        
+                        _timerTask = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(TimeSpan.FromMilliseconds(20),
+                        TimeSpan.FromMilliseconds(TIME_STEP_MS), Context.Self, new TimeElapse(), ActorRefs.NoSender);          
                     }
                 }
                 else
@@ -58,8 +71,10 @@ namespace AkkaRaft.Shared.Elections
         {
             byte[] b = new byte[2];
             RandomNumberGenerator.Create().GetBytes(b);
-
-            _electionTimeout = ((BitConverter.ToInt16(b, 0) % 10000) % 5000) + 5000;
+            double rand = Math.Abs((double)BitConverter.ToInt16(b, 0)) / 100000;
+            Log.Information("{0}",$"Election is now {_electionDuration}ms");
+            _electionDuration = (int)(rand * (MAX_DURATION_MS - MIN_DURATION_MS) + MIN_DURATION_MS);
+            NodeEvents.OnElectionDurationChanged?.Invoke(_electionDuration);
         }
 
         protected override void PreStart()

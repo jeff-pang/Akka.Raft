@@ -1,6 +1,8 @@
-﻿using Serilog;
+﻿using AkkaRaft.Shared.Logs;
+using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace AkkaRaft.Shared.Nodes
@@ -17,15 +19,35 @@ namespace AkkaRaft.Shared.Nodes
         public static int Term { get; private set; }
         public static int ClusterUid { get; private set; }
         public static int CurrentLeaderId { get; private set; }
-        public Roles Role { get; private set; }
+        public static int ElectionElapsed { get; set; }
+        public static int ElectionDuration { get; set; }
+        public static List<LogEntry> LogEntries { get; private set; }
+        public static int LogIndex { get { return LogEntries.Count; } }
+
+        static Roles _role;
+        public static Roles Role
+        {
+            get { return _role; }
+            set
+            {
+                Log.Information("{0}",$"Role is now {_role.ToString()}");
+                _role = value;
+            }
+        }
         private int _votedForTerm;
-        private int _majority;
-        private int _votes;
+
+        public static int Votes { get; private set; }
+        public static int Majority { get; private set; }
+        public static int ProcessId { get; private set; }
         public Node(int clusterUniqueId)
         {
+            ProcessId = Process.GetCurrentProcess().Id;
             ClusterUid = clusterUniqueId;
-
             Log.Information("{0}", $"My Uid is {ClusterUid}");
+            LogEntries = new List<LogEntry>();
+
+            NodeEvents.OnElectionDurationChanged = dur => ElectionDuration = dur;
+            NodeEvents.OnElectionElapsed = el => ElectionElapsed = el;
 
             NodeEvents.OnElectionTimeout = () => {
                 //step up as candidate
@@ -34,7 +56,7 @@ namespace AkkaRaft.Shared.Nodes
                 {
                     Role = Roles.Candidate;
                     Term++;
-                    _votes = 0;
+                    Votes = 0;
 
                     Log.Information("{0}", $"Starting election for term {Term}");
                     ActionBroker.StopElectionTimer();
@@ -49,11 +71,11 @@ namespace AkkaRaft.Shared.Nodes
                 //start sending heartbeat
                 if (term == Term)
                 {
-                    _votes++;
+                    Votes++;
                 }
 
-                Log.Information("{0}", $"Got {_votes}/{_majority} votes for term {term} from {uid}");
-                if (_votes >= _majority)
+                Log.Information("{0}", $"Got {Votes}/{Majority} votes for term {term} from {uid}");
+                if (Votes >= Majority)
                 {
                     Log.Information("{0}", "Elected!");
                     Role = Roles.Leader;
@@ -63,7 +85,7 @@ namespace AkkaRaft.Shared.Nodes
                 }
             };
 
-            NodeEvents.OnHeartbeat = hb => {
+            NodeEvents.OnHeartbeat = (senderpath,hb) => {
                 //resets election time
                 //otherwise becomes candidate and send request for votes         
                 ActionBroker.ResetElectionTimer();
@@ -71,6 +93,7 @@ namespace AkkaRaft.Shared.Nodes
                 //if heartbeat has term equal or bigger than self, then step down
                 if (hb.Term >= Term)
                 {
+                    //need to roll back changes and take match leader's log entries
                     if (Role != Roles.Follower)
                     {
                         Log.Information("{0}", "Stepping down");
@@ -85,7 +108,13 @@ namespace AkkaRaft.Shared.Nodes
                         Term = hb.Term;
                     }
                 }
+
                 CurrentLeaderId = hb.SenderId;
+                
+                if(Role == Roles.Follower)
+                {
+                    ActionBroker.SendHeartbeatResponse(hb.Id, hb.SenderId, senderpath, hb.Term, hb.LogIndex);
+                }
             };
 
             NodeEvents.OnJoinedCluster = () => {
@@ -131,10 +160,17 @@ namespace AkkaRaft.Shared.Nodes
 
             NodeEvents.OnMemberChanged = count => {
                 //update majority
-                _majority = (count + 1) / 2;
-                Log.Information("{0}", $"Majority is now {_majority}");
+                Majority = (count + 1) / 2;
+                Log.Information("{0}", $"Majority is now {Majority}");
             };
+
         }
+
+        public void OnKill()
+        {
+            ActionBroker.SendTerminateSignal();
+        }
+
         public void Stop(TimeSpan timeSpan)
         {
             ActionBroker.Stop(timeSpan);

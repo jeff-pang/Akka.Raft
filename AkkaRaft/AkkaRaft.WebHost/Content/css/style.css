@@ -1,0 +1,26 @@
+﻿.circleContainer {
+    position: relative;
+    display: inline-block;
+    width:120px;
+}
+
+.message {
+    position: absolute;
+    vertical-align: middle;
+    text-align: center;
+    width: 100%;
+    top: 55%;
+}
+
+.loading {
+    width: 36px;
+    height: 36px;
+    background: url(../img/loading.gif) 0 0;
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin: 0 auto;
+}
+
+.loadingcontainer {
+    height:150px;
+}

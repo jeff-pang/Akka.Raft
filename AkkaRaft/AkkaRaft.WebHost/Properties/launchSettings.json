@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "AkkaRaft.WebHost": {
+      "commandName": "Project"
+    }
+  }
+}
