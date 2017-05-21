@@ -57,6 +57,13 @@ namespace AkkaRaft.WebHost.WebApi
 
                 return HttpStatusCode.OK;
             });
+
+            Post("Node/Data", p => {
+
+                string data = RequestStream.FromStream(Request.Body).AsString();
+                
+                return HttpStatusCode.OK;
+            });
         }
     }
 }

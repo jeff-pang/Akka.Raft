@@ -22,12 +22,11 @@ namespace AkkaRaft.Shared.Web
 
             Receive<SendStatus>(s =>
             {
-                var ns = new NodeStatus(Node.Term, Node.ClusterUid)
+                var ns = new NodeStatus(Node.Term, Node.Uid)
                 {
                     ElectionElapsed = Node.ElectionElapsed,
-                    ElectionDuration = Node.ElectionDuration,
-                    IsLeader = (Node.Role == Node.Roles.Leader),
-                    Role = Node.Role.ToString(),
+                    ElectionDuration = Node.ElectionDuration,                    
+                    Role = Node.Role,
                     ProcessId = Node.ProcessId,
                     Votes = Node.Votes,
                     Majority = Node.Majority
@@ -38,11 +37,10 @@ namespace AkkaRaft.Shared.Web
 
             Receive<SendTerminate>(s =>
             {
-                var ns = new NodeStatus(Node.Term, Node.ClusterUid)
+                var ns = new NodeStatus(Node.Term, Node.Uid)
                 {
                     ElectionElapsed = Node.ElectionElapsed,
                     ElectionDuration = Node.ElectionDuration,
-                    IsLeader = (Node.Role == Node.Roles.Leader),
                     Role = Node.Role.ToString(),
                     ProcessId = Node.ProcessId,
                     Votes = Node.Votes,

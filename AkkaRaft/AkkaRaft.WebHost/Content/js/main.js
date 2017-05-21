@@ -129,7 +129,7 @@ function updateNode(obj) {
                 $(voteid).hide();
             }
 
-            if (obj.IsLeader != true) {
+            if (obj.Role!="Leader") {
                 radialObj.option('displayNumber', true);
             }
         }
@@ -149,6 +149,21 @@ function updateNode(obj) {
 $(function () {    
     
     connect();
+
+    $("#btnAppend").click(function () {
+        var appendData = $("#txtAppend").val();
+
+        $.ajax({
+            type: "POST",
+            data: appendData,
+            url: "/Node/Data",
+            success: function (data) {
+                // success, do work
+                console.log("data sent");
+            },
+            dataType: 'json'
+        });
+    });
 
     $("#btnStartNew").click(function () {
         var loading = $("#loading_tmpl").html();

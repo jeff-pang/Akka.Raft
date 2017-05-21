@@ -9,7 +9,6 @@ namespace AkkaRaft.Shared.Web
         public int NodeId { get; private set; }
         public int ElectionDuration { get; set; }
         public int ElectionElapsed { get; set; }
-        public bool IsLeader { get; set; }
         public string Role { get; set; }
         public int ProcessId { get; set; }
         public bool Terminated { get; set; }

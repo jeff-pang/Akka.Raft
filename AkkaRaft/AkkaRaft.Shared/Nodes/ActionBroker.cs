@@ -15,8 +15,18 @@ namespace AkkaRaft.Shared.Nodes
         static IActorRef _electionCycle;
         static IActorRef _candidate;
         static IActorRef _follower;
-        static IActorRef _leader;
         static IActorRef _statusBroadcast;
+        static IActorRef _data;
+
+        public static void SetData(IActorRef data)
+        {
+            _data = data;
+        }
+
+        public static void SendData(string payload, string actorPath)
+        {
+            //_data.Tell(new SendData(payload, actorPath));
+        }
 
         public static void SetStatusBroadcast(IActorRef statusBroadcast)
         {
@@ -37,12 +47,7 @@ namespace AkkaRaft.Shared.Nodes
         {
             _candidate = candidate;
         }
-
-        public static void SetLeader(IActorRef leader)
-        {
-            _leader = leader;
-        }
-
+        
         public static void SetFollower(IActorRef follower)
         {
             _follower = follower;
@@ -91,11 +96,11 @@ namespace AkkaRaft.Shared.Nodes
         {
             _statusBroadcast.Tell(new SendTerminate());
         }
-        public static void SendHeartbeatResponse(double heartbeatId, int senderId, string senderPath, int term, int logIndex)
+        public static void SendHeartbeatResponse(double heartbeatId, int term,string senderPath, int matchIndex,int? nextIndex)
         {
-            _heartbeat.Tell(new SendHeartbeatResponse(heartbeatId, senderId, senderPath, term, logIndex));
+            _heartbeat.Tell(new SendHeartbeatResponse(heartbeatId, term, senderPath, matchIndex,(nextIndex ?? 0) + 1));
         }
-
+        
         public static void Stop(TimeSpan timeout)
         {
             SendTerminateSignal();

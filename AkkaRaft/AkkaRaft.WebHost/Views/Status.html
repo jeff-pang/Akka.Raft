@@ -14,7 +14,7 @@
         <div class="col-sm-2 col-md-2" id="tmpl">
             <div class="circleContainer col-sm-1 col-md-1">
                 <div class="circle" id="circle">
-                    <div class="message"><span class="label label-default">Leader</span></div>
+                    <div class="message"><span class="label label-default"></span></div>
                 </div>
             </div>
             <div class="col-sm-1 col-md-1">
@@ -40,8 +40,16 @@
 <body>
     <p>
         <div class="row">
-            <div class="col-sm-offset-5 col-md-2 col-sm-2">
-                <button type="button" class="btn btn-success btn-md btn-block" id="btnStartNew">Start New Instance</button>
+            <div class="col-sm-offset-4 col-md-2 col-sm-2">
+                <button type="button" class="btn btn-success btn-md btn-block" id="btnStartNew">Start New Instance</button>                
+            </div>
+            <div class="col-md-2 col-sm-2">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Append Entry" id="txtAppend">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" id="btnAppend">Go!</button>
+                    </span>
+                </div>
             </div>
         </div>
     </p>

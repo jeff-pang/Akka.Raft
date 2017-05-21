@@ -8,17 +8,17 @@ namespace AkkaRaft.Shared.Heartbeats
     {
         public double HeartbeatId { get; private set; }
         public int Term { get; private set; }
-        public int LogIndex { get; private set; }
-        public int SenderId { get; private set; }
+        public int? NextIndex { get; private set; }
+        public int MatchIndex { get; private set; }
         public string SenderPath { get; private set; }
 
-        public SendHeartbeatResponse(double heartbeatId,int senderId,string senderPath,int term,int logIndex)
+        public SendHeartbeatResponse(double heartbeatId,int term,string senderPath,int matchIndex,int? nextIndex)
         {
+            SenderPath = senderPath;
             HeartbeatId = heartbeatId;
             Term = term;
-            LogIndex = LogIndex;
-            SenderId = senderId;
-            SenderPath = senderPath;
+            NextIndex = nextIndex;
+            MatchIndex = matchIndex;
         }
     }
 }

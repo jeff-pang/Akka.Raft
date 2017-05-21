@@ -21,11 +21,13 @@ namespace AkkaRaft.Shared.Elections
         private int _electionDuration = MAX_DURATION_MS;
         private int _timeElapsed = 0;
         private bool _isStarted = false;
-
+        private NodeEvents _nodeEvents;
         public int ElectionDuration { get => _electionDuration; set => _electionDuration = value; }
 
-        public ElectionCycleActor()
+        public ElectionCycleActor(StateEvents stateEvents,NodeEvents nodeEvents)
         {
+            _nodeEvents = nodeEvents;
+
             randomiseTimeout();
             Log.Information("{0}", $"Duration is {(float)_electionDuration/ MS_PER_SEC}");
 
@@ -33,13 +35,13 @@ namespace AkkaRaft.Shared.Elections
 
                 _timeElapsed += TIME_STEP_MS;
 
-                NodeEvents.OnElectionElapsed?.Invoke(_timeElapsed);
+                nodeEvents.OnElectionElapsed?.Invoke(_timeElapsed);
 
                 Console.Write($"({(float)_timeElapsed/ MS_PER_SEC})");
                 if(_timeElapsed >= _electionDuration)
                 {
                     randomiseTimeout();
-                    NodeEvents.OnElectionTimeout?.Invoke();
+                    stateEvents.OnElectionTimeout?.Invoke();
                 }
             });
 
@@ -74,7 +76,7 @@ namespace AkkaRaft.Shared.Elections
             double rand = Math.Abs((double)BitConverter.ToInt16(b, 0)) / 100000;
             Log.Information("{0}",$"Election is now {_electionDuration}ms");
             _electionDuration = (int)(rand * (MAX_DURATION_MS - MIN_DURATION_MS) + MIN_DURATION_MS);
-            NodeEvents.OnElectionDurationChanged?.Invoke(_electionDuration);
+            _nodeEvents.OnElectionDurationChanged?.Invoke(_electionDuration);
         }
 
         protected override void PreStart()

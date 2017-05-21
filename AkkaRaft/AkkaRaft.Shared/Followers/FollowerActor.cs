@@ -2,6 +2,7 @@
 using Akka.Cluster;
 using Akka.Cluster.Tools.PublishSubscribe;
 using AkkaRaft.Shared.Candidates;
+using AkkaRaft.Shared.Logs;
 using AkkaRaft.Shared.Nodes;
 using Serilog;
 using System;
@@ -12,17 +13,16 @@ namespace AkkaRaft.Shared.Followers
 {
     public class FollowerActor:ReceiveActor
     {
-        public FollowerActor()
+        public FollowerActor(StateEvents nodeEvents)
         {
-
             Receive<VoteRequest>(vr =>
             {
-                bool vote = NodeEvents.OnVoteRequest?.Invoke(vr) ?? false;
+                bool vote = nodeEvents.OnVoteRequest?.Invoke(vr) ?? false;
                 if (vote)
                 {
-                    Sender.Tell(new Vote(vr.Term,Node.ClusterUid));
+                    Sender.Tell(new Vote(vr.Term,Node.Uid));
                 }
-            });
+            });            
         }
 
         protected override void PreStart()

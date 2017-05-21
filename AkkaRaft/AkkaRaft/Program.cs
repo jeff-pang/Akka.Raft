@@ -17,9 +17,6 @@ namespace AkkaRaft
 {
     class Program
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool SetConsoleCtrlHandler(Action callback, bool add);
-
         static void Main(string[] args)
         {
             var assm = Assembly.GetEntryAssembly();
@@ -49,8 +46,6 @@ namespace AkkaRaft
                 {
                     input=Console.ReadLine();
                 } while (input?.ToLower() != "exit");
-                SetConsoleCtrlHandler(node.OnKill,true);
-                node.Stop(TimeSpan.FromSeconds(20));
             }
         }        
     }

@@ -15,13 +15,14 @@ namespace AkkaRaft.Shared.Candidates
         
         private bool _timeStarted;
         private ICancelable _timerTask;
-        public CandidateActor()
+        
+        public CandidateActor(StateEvents nodeEvents)
         {
             var mediator = DistributedPubSub.Get(Context.System).Mediator;
 
             Receive<AskForVote>(a=>{
                 Log.Information("{0}","Asks for votes");
-                mediator.Tell(new Publish("voterequest", new VoteRequest(a.Term, Node.ClusterUid)));
+                mediator.Tell(new Publish("voterequest", new VoteRequest(a.Term, Node.Uid)));
             });
 
             Receive<Vote>(v => {
@@ -29,8 +30,7 @@ namespace AkkaRaft.Shared.Candidates
                 //reset
                 stopWait();
                 startWait();
-                NodeEvents.OnGotVote?.Invoke(v.SenderId, v.Term);
-                
+                nodeEvents.OnGotVote?.Invoke(v.SenderId, v.Term);
             });
 
             Receive<WaitTimeout>(v =>
@@ -38,7 +38,7 @@ namespace AkkaRaft.Shared.Candidates
                 if (_timeStarted)
                 {
                     Log.Information("{0}", "Wait timeout");
-                    NodeEvents.OnWaitForVoteTimeout?.Invoke();
+                    nodeEvents.OnWaitForVoteTimeout?.Invoke();
                 }
             });
 
@@ -54,7 +54,6 @@ namespace AkkaRaft.Shared.Candidates
                     stopWait();
                 }
             });
-
         }
 
         private void startWait()

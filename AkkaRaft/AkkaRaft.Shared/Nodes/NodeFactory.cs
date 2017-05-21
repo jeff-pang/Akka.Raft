@@ -9,7 +9,6 @@ using AkkaRaft.Shared.Candidates;
 using AkkaRaft.Shared.Followers;
 using Akka.Cluster;
 using AkkaRaft.Shared.Web;
-using AkkaRaft.Shared.Leader;
 
 namespace AkkaRaft.Shared.Nodes
 {
@@ -19,15 +18,19 @@ namespace AkkaRaft.Shared.Nodes
         {
             var cluster = Cluster.Get(system);
             int uid=cluster.SelfUniqueAddress.Uid;
-            var node = new Node(uid);
+            StateEvents stateEvents = new StateEvents();
+            NodeEvents nodeEvents = new NodeEvents();
 
-            ActionBroker.SetLeader(system.ActorOf<LeaderActor>("leader"));
-            ActionBroker.SetFollower(system.ActorOf<FollowerActor>("follower"));
-            ActionBroker.SetCandidate(system.ActorOf<CandidateActor>("candidate"));
-            ActionBroker.SetElection(system.ActorOf<ElectionCycleActor>("electionCycle"));
-            ActionBroker.SetHeartbeat(system.ActorOf<HeartbeatActor>("heartbeat"));
-            ActionBroker.SetStatusBroadcast(system.ActorOf<StatusBroadcastActor>("status"));
+            var node = new Node(uid, stateEvents, nodeEvents);
+
+            ActionBroker.SetFollower(system.ActorOf(Props.Create<FollowerActor>(stateEvents),"follower"));
+            ActionBroker.SetCandidate(system.ActorOf(Props.Create<CandidateActor>(stateEvents),"candidate"));
             
+            ActionBroker.SetElection(system.ActorOf(Props.Create<ElectionCycleActor>(stateEvents, nodeEvents),"electionCycle"));
+            ActionBroker.SetHeartbeat(system.ActorOf(Props.Create<HeartbeatActor>(stateEvents,nodeEvents),"heartbeat"));
+            ActionBroker.SetStatusBroadcast(system.ActorOf(Props.Create<StatusBroadcastActor>(), "status"));
+            //ActionBroker.SetData(system.ActorOf<DataActor>("data"));
+
             return node;
         }
     }
